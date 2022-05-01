@@ -1,16 +1,18 @@
 package Client;
 
+import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 
-public class ClientP2PApp extends Thread {
+public class ClientP2PApp {
     protected DatagramSocket socket;
     protected DatagramPacket packet;
     protected InetAddress localAddress;
     protected int localPort;
     protected InetAddress serverAddress;
     protected int serverPort;
+    protected String nickName;
 
     public ClientP2PApp(String localPort, String serverAddress, String serverPort) throws Exception {
         this.localAddress = InetAddress.getLocalHost();
@@ -20,8 +22,10 @@ public class ClientP2PApp extends Thread {
 
         socket = new DatagramSocket(this.localPort);
     }
-    
-    public void run() {
-        System.out.println("Client");
+
+    public void run() throws IOException {
+        new PeerClient().start();
+        new PeerHeartbeat(this.serverAddress, this.serverPort, this.localAddress.getHostAddress()).start();
+        new PeerThread().start();
     }
 }

@@ -10,39 +10,40 @@ public class App {
             System.exit(1);
         }
 
-        switch(args[0].toUpperCase()) {
+        switch (args[0].toUpperCase()) {
             case "SERVER":
-                try{
+                try {
                     P2PFactory.createP2PServer(args[1]).run();
-                } catch(NumberFormatException ex) {
+                } catch (NumberFormatException ex) {
                     System.out.println("\n\tERROR: Invalid local port!\n");
-                } catch(SocketException ex) {
+                } catch (SocketException ex) {
                     System.out.println("\n\tERROR: Port already being used!\n");
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
                 break;
             case "CLIENT":
-                try{
+                try {
                     P2PFactory.createP2PClient(args[1], args[2], args[3]).run();
-                } catch(UnknownHostException ex) {
+                } catch (UnknownHostException ex) {
                     System.out.println("\n\tERROR: Invalid local address!\n");
-                } catch(NumberFormatException ex) {
+                } catch (NumberFormatException ex) {
                     System.out.println("\n\tERROR: Invalid local port!\n");
-                } catch(SocketException ex) {
+                } catch (SocketException ex) {
                     System.out.println("\n\tERROR: Port already being used!\n");
-                } catch(Exception ex) {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                 }
                 break;
             default:
                 printHelpMessage();
         }
-        
+
         System.exit(0);
     }
 
     public static void printHelpMessage() {
-        System.out.println("\n\tUsage: java App server <port> | java App client <local_port> <server_ip> <server_port>\n");
+        System.out.println(
+                "\n\tUsage: java App server <port> | java App client <local_port> <server_ip> <server_port>\n");
     }
 }

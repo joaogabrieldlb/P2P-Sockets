@@ -6,14 +6,12 @@ import java.util.Set;
 
 public class Peer {
 
-    private final String nickname;
     private final InetAddress ipAddress;
     private final Integer port;
-    private Set<Resource> resourcesHash = new HashSet<>();
+    private Set<Resource> resources = new HashSet<>();
     private int timeOut = 15; /* 500ms * 15 = 7.5s (enough for 5s heartbeat) */
 
-    public Peer(String nickname, InetAddress ipAddress, Integer port) {
-        this.nickname = nickname;
+    public Peer(InetAddress ipAddress, Integer port) {
         this.ipAddress = ipAddress;
         this.port = port;
     }
@@ -26,10 +24,6 @@ public class Peer {
         return --this.timeOut;
     }
 
-    public String getNickname() {
-        return nickname;
-    }
-
     public InetAddress getIpAddress() {
         return ipAddress;
     }
@@ -38,17 +32,16 @@ public class Peer {
         return port;
     }
 
-    public Set<Resource> getResourcesHash() {
-        return resourcesHash;
+    public Set<Resource> getResources() {
+        return resources;
     }
 
-    public boolean addResourceHash(Resource resourceHash) {
-        return resourcesHash.add(resourceHash);
+    public boolean addResource(Resource resource) {
+        return resources.add(resource);
     }
 
-    @Override
-    public String toString() {
-        return "Peer [ipAddress=" + ipAddress + ", nickname=" + nickname + ", port=" + port + "]";
+    public boolean removeResource(Resource resource) {
+        return resources.remove(resource);
     }
 
     @Override
@@ -56,8 +49,6 @@ public class Peer {
         final int prime = 31;
         int result = 1;
         result = prime * result + ((ipAddress == null) ? 0 : ipAddress.hashCode());
-        result = prime * result + ((nickname == null) ? 0 : nickname.hashCode());
-        result = prime * result + ((port == null) ? 0 : port.hashCode());
         return result;
     }
 
@@ -74,16 +65,6 @@ public class Peer {
             if (other.ipAddress != null)
                 return false;
         } else if (!ipAddress.equals(other.ipAddress))
-            return false;
-        if (nickname == null) {
-            if (other.nickname != null)
-                return false;
-        } else if (!nickname.equals(other.nickname))
-            return false;
-        if (port == null) {
-            if (other.port != null)
-                return false;
-        } else if (!port.equals(other.port))
             return false;
         return true;
     }

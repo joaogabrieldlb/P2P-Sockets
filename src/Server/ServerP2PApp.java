@@ -10,7 +10,7 @@ import java.util.Set;
 public class ServerP2PApp {
 
     InetAddress addr;
-    int serverPort;
+    int peerPort;
     DatagramSocket socket;
     Set<Peer> connectedPeers = new HashSet<>();
     DatagramPacket packet;
@@ -19,14 +19,12 @@ public class ServerP2PApp {
     byte[] response = new byte[1024];
 
     public ServerP2PApp(String serverPort) throws Exception {
-        this.serverPort = Integer.parseInt(serverPort);
-        this.socket = new DatagramSocket(this.serverPort);
+        this.peerPort = Integer.parseInt(serverPort);
+        this.socket = new DatagramSocket(this.peerPort);
 
     }
 
     public void run() {
-        System.out.println("Server");
-
         while (true) {
             try {
                 String content = null;
@@ -34,24 +32,53 @@ public class ServerP2PApp {
                 packet = new DatagramPacket(resource, resource.length);
                 socket.setSoTimeout(500);
                 socket.receive(packet);
-                System.out.print("Recebi!");
 
                 // processa o que foi recebido, adicionando a uma lista
-                content = new String(packet.getData(), 0, packet.getLength());
                 addr = packet.getAddress();
-                serverPort = packet.getPort();
+                peerPort = packet.getPort();
+                System.out.print(String.format("[ %s:%d ] Recebi um pacote!", addr.toString(), peerPort));
+
+                content = new String(packet.getData(), 0, packet.getLength());
                 String vars[] = content.split("\\s");
 
-                if (vars[0].equals("add") && vars.length > 1) {
-                    // verificar se a hash já está vinculada ao peer solicitante.
+                // add-resource texto.txt AJLKSDH1J23ASDAS
+                if (vars[0].equals("add-resource") && vars.length == 3) {
+                    // name e hash
+                    String resourceName = vars[1];
+                    String resourceHash = vars[2];
 
-                    // adicionar hash a lista de recursos do peer.
+                    for (Peer peer : this.connectedPeers) {
+                        if (peer.getIpAddress().getHostAddress().equals(addr.getHostAddress())) {
+                            peer.addResource(new Resource(resourceName, resourceHash, peer));
+                        }
+                    }
 
+                    response = "OK".getBytes();
+
+                    packet = new DatagramPacket(response, response.length, addr, peerPort);
+                    socket.send(packet);
                 }
 
-                if (vars[0].equals("create") && vars.length > 1) {
-                    int j;
-                    Peer newPeer = new Peer(vars[1], addr, serverPort);
+                // add-resource texto.txt AJLKSDH1J23ASDAS
+                if (vars[0].equals("remove-resource") && vars.length == 3) {
+                    // name e hash
+                    String resourceName = vars[1];
+                    String resourceHash = vars[2];
+
+                    for (Peer peer : this.connectedPeers) {
+                        if (peer.getIpAddress().getHostAddress().equals(addr.getHostAddress())) {
+                            peer.removeResource(new Resource(resourceName, resourceHash, peer));
+                        }
+                    }
+
+                    response = "OK".getBytes();
+
+                    packet = new DatagramPacket(response, response.length, addr, peerPort);
+                    socket.send(packet);
+                }
+
+                if (vars[0].equals("register") && vars.length > 1) {
+                    Peer newPeer = new Peer(addr, peerPort);
                     System.out.println(newPeer.toString());
 
                     boolean isNewPeer = connectedPeers.add(newPeer); // adicionar novo peer.
@@ -61,7 +88,7 @@ public class ServerP2PApp {
                         response = "OK".getBytes();
                     }
 
-                    packet = new DatagramPacket(response, response.length, addr, serverPort);
+                    packet = new DatagramPacket(response, response.length, addr, peerPort);
                     socket.send(packet);
                 }
 
