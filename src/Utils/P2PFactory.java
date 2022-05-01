@@ -10,7 +10,7 @@ public class P2PFactory {
         return new ClientP2PApp(localPort, serverAddress, serverPort);
     }
 
-    public static ServerP2PApp createP2PServer() {
-        return new ServerP2PApp();
+    public static ServerP2PApp createP2PServer(String serverPort) {
+        return new ServerP2PApp(serverPort);
     }
 }
