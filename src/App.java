@@ -2,7 +2,7 @@ import Utils.P2PFactory;
 
 public class App {
     public static void main(String[] args) throws Exception {
-        if (args.length == 2 || args.length == 4) {
+        if (!(args.length == 2 || args.length == 4)) {
             printHelpMessage();
             System.exit(1);
         }
