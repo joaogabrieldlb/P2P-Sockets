@@ -14,14 +14,14 @@ public class ClientP2PApp extends Thread {
     protected int port;
     protected int peerPort;
 
-    public ClientP2PApp(String localport, String server) throws SocketException {
+    public ClientP2PApp(String localPort, String serverAddress, String serverPort) throws SocketException {
         try {
-            this.address = InetAddress.getByName(server);
-            this.port = Integer.parseInt(localport) + 101;
+            this.address = InetAddress.getByName(serverAddress);
+            this.port = Integer.parseInt(localPort) + 101;
         } catch(UnknownHostException ex) {
-            System.out.println("ERROR: Invalid machine address!");
+            System.out.println("\n\tERROR: Invalid machine address!\n");
         } catch(NumberFormatException ex) {
-            System.out.println("ERROR: Invalid local port!");
+            System.out.println("\n\tERROR: Invalid local port!\n");
         }
 
         socket = new DatagramSocket(this.port);
