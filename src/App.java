@@ -12,13 +12,21 @@ public class App {
 
         switch(args[0].toUpperCase()) {
             case "SERVER":
-                P2PFactory.createP2PServer(args[1]).run();
+                try{
+                    P2PFactory.createP2PServer(args[1]).run();
+                } catch(NumberFormatException ex) {
+                    System.out.println("\n\tERROR: Invalid local port!\n");
+                } catch(SocketException ex) {
+                    System.out.println("\n\tERROR: Port already being used!\n");
+                } catch(Exception ex) {
+                    ex.printStackTrace();
+                }
                 break;
             case "CLIENT":
                 try{
                     P2PFactory.createP2PClient(args[1], args[2], args[3]).run();
-                }  catch(UnknownHostException ex) {
-                    System.out.println("\n\tERROR: Invalid machine address!\n");
+                } catch(UnknownHostException ex) {
+                    System.out.println("\n\tERROR: Invalid local address!\n");
                 } catch(NumberFormatException ex) {
                     System.out.println("\n\tERROR: Invalid local port!\n");
                 } catch(SocketException ex) {
