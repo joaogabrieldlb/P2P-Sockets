@@ -4,14 +4,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.HashSet;
 import java.util.Set;
 
 public class ServerP2PApp {
 
     InetAddress addr;
-    int port;
+    int serverPort;
     DatagramSocket socket;
     Set<Peer> connectedPeers = new HashSet<>();
     DatagramPacket packet;
@@ -19,13 +18,10 @@ public class ServerP2PApp {
     byte[] resource = new byte[1024];
     byte[] response = new byte[1024];
 
-    public ServerP2PApp(int socketPort) {
-        try {
-            this.socket = new DatagramSocket(socketPort);
-        } catch (SocketException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+    public ServerP2PApp(String serverPort) throws Exception {
+        this.serverPort = Integer.parseInt(serverPort);
+        this.socket = new DatagramSocket(this.serverPort);
+
     }
 
     public void run() {
@@ -43,7 +39,7 @@ public class ServerP2PApp {
                 // processa o que foi recebido, adicionando a uma lista
                 content = new String(packet.getData(), 0, packet.getLength());
                 addr = packet.getAddress();
-                port = packet.getPort();
+                serverPort = packet.getPort();
                 String vars[] = content.split("\\s");
 
                 if (vars[0].equals("add") && vars.length > 1) {
@@ -55,7 +51,7 @@ public class ServerP2PApp {
 
                 if (vars[0].equals("create") && vars.length > 1) {
                     int j;
-                    Peer newPeer = new Peer(vars[1], addr, port);
+                    Peer newPeer = new Peer(vars[1], addr, serverPort);
                     System.out.println(newPeer.toString());
 
                     boolean isNewPeer = connectedPeers.add(newPeer); // adicionar novo peer.
@@ -65,7 +61,7 @@ public class ServerP2PApp {
                         response = "OK".getBytes();
                     }
 
-                    packet = new DatagramPacket(response, response.length, addr, port);
+                    packet = new DatagramPacket(response, response.length, addr, serverPort);
                     socket.send(packet);
                 }
 
