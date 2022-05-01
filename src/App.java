@@ -12,7 +12,7 @@ public class App {
 
         switch(args[0].toUpperCase()) {
             case "SERVER":
-                P2PFactory.createP2PServer().run();
+                P2PFactory.createP2PServer(args[1]).run();
                 break;
             case "CLIENT":
                 try{
