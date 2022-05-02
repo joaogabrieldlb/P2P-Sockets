@@ -9,7 +9,8 @@ public class Peer {
     private final InetAddress ipAddress;
     private final Integer port;
     private Set<Resource> resources = new HashSet<>();
-    private int timeOut = 15; /* 500ms * 15 = 7.5s (enough for 5s heartbeat) */
+    private final int HEARTHBEAT_TIMEOUT = 15; /* 1000ms * 15 = 15s (enough for 10s heartbeat) */
+    private int timeOut = HEARTHBEAT_TIMEOUT;
 
     public Peer(InetAddress ipAddress, Integer port) {
         this.ipAddress = ipAddress;
@@ -17,7 +18,7 @@ public class Peer {
     }
 
     public void resetTimeOut() {
-        this.timeOut = 15;
+        this.timeOut = HEARTHBEAT_TIMEOUT;
     }
 
     public int decrementTimeOut() {
