@@ -28,7 +28,7 @@ public class ClientScanResources extends Thread {
 
     @Override
     public void run() {
-        while(true) {
+        while (true) {
             try {
                 // ler arquivos da pasta resources
                 List<File> filesInFolder;
@@ -36,7 +36,7 @@ public class ClientScanResources extends Thread {
                         .filter(Files::isRegularFile)
                         .map(Path::toFile)
                         .collect(Collectors.toList());
-                
+
                 // adiciona no clientresource e registra no server
                 for (File file : filesInFolder) {
                     ClientResource resource = new ClientResource(file);
@@ -61,6 +61,7 @@ public class ClientScanResources extends Thread {
                         this.app.mainSocketSemaphore.release();
                     }
                 }
+
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
                 return;
@@ -81,7 +82,8 @@ public class ClientScanResources extends Thread {
 
     private void addResource(ClientResource newResource) throws IOException {
         String messege = "add-resource|" + newResource.toString();
-        this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress, this.app.serverPort);
+        this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress,
+                this.app.serverPort);
         this.socket.send(packet);
 
         try {
@@ -98,7 +100,8 @@ public class ClientScanResources extends Thread {
 
     private void removeResource(ClientResource removedResource) throws IOException {
         String messege = "remove-resource|" + removedResource.toString();
-        this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress, this.app.serverPort);
+        this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress,
+                this.app.serverPort);
         this.socket.send(packet);
 
         try {

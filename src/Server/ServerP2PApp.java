@@ -21,29 +21,34 @@ public class ServerP2PApp {
     private ServerP2PHearthbeat hearthbeat;
 
     byte[] response = new byte[1024];
+    byte[] resource = new byte[1024];
 
     public ServerP2PApp(String serverPort) throws Exception {
         this.peerPort = Integer.parseInt(serverPort);
         this.socket = new DatagramSocket(this.peerPort);
         hearthbeat = new ServerP2PHearthbeat(connectedPeers, connectedPeersSemaphore);
-        hearthbeat.run();
+        hearthbeat.start();
     }
 
     public void run() {
         while (true) {
             try {
+                System.out.println("Esperando novo pacote:");
                 String content = null;
                 // recebe datagrama
-                //socket.setSoTimeout(500);
-                socket.receive(packet);
+                // socket.setSoTimeout(500);
+                this.packet = new DatagramPacket(resource, resource.length);
+                socket.receive(this.packet);
 
                 // processa o que foi recebido, adicionando a uma lista
                 peerAddr = packet.getAddress();
                 peerPort = packet.getPort();
                 System.out.print(String.format("[ %s:%d ] Recebi um pacote!", peerAddr.toString(), peerPort));
 
-                content = new String(packet.getData());
-                String vars[] = content.split("|");
+                content = new String(packet.getData()).trim();
+                System.out.println("\nContent: " + content);
+                String vars[] = content.split("\\|");
+                System.out.println("Size: " + vars.length);
 
                 // add-resource|texto.txt|AJLKSDH1J23ASDAS
                 if (vars[0].equals("add-resource") && vars.length > 3) {
@@ -63,7 +68,7 @@ public class ServerP2PApp {
                     this.removeResource(resourceName, resourceHash);
                 }
 
-                if (vars[0].equals("register") && vars.length > 1) {
+                if (vars[0].equals("register") && vars.length == 1) {
                     this.registerPeer(new Peer(peerAddr, peerPort));
                 }
 
@@ -73,7 +78,8 @@ public class ServerP2PApp {
                     this.listResources(vars[1], vars[2]);
                 }
 
-                if (vars[0].equals("heartbeat") && vars.length > 1) {
+                if (vars[0].equals("heartbeat") && vars.length == 1) {
+
                     if (!hearthbeat.receivedHearbeat(peerAddr, peerPort)) {
                         response = "Peer not connected".getBytes();
                         packet = new DatagramPacket(response, response.length, peerAddr, peerPort);
@@ -136,8 +142,6 @@ public class ServerP2PApp {
     }
 
     private void registerPeer(Peer newPeer) throws InterruptedException, IOException {
-        System.out.println(newPeer.toString());
-
         this.connectedPeersSemaphore.acquire();
         boolean isNewPeer = connectedPeers.add(newPeer); // adicionar novo peer.
         this.connectedPeersSemaphore.release();

@@ -11,7 +11,7 @@ import java.nio.file.Files;
 import java.util.Arrays;
 
 public class PeerConsole implements Runnable {
-    
+
     private ClientP2PApp app;
     private int localPort;
     private DatagramPacket packet;
@@ -25,9 +25,10 @@ public class PeerConsole implements Runnable {
 
     public void run() {
         // Solicita registro no servidor
-        byte[] data = "register".getBytes();
-        this.packet = new DatagramPacket(data, data.length, app.serverAddress, app.serverPort);
+
         try {
+            byte[] data = "register".getBytes();
+            this.packet = new DatagramPacket(data, data.length, app.serverAddress, app.serverPort);
             this.socket.send(packet); // Tenta se registrar no servidor.
 
             byte[] response = new byte[1024];

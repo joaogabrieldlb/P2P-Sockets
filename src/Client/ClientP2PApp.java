@@ -7,14 +7,13 @@ import java.util.Set;
 import java.util.concurrent.Semaphore;
 
 public class ClientP2PApp {
-    
+
     protected DatagramSocket mainSocket;
     protected int localPort;
     protected InetAddress serverAddress;
     protected int serverPort;
     protected Set<ClientResource> clientResources = new HashSet<>();
     protected Semaphore mainSocketSemaphore = new Semaphore(1);
-
 
     public ClientP2PApp(String localPort, String serverAddress, String serverPort) throws Exception {
         this.localPort = Integer.parseInt(localPort);
