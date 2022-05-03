@@ -2,6 +2,7 @@ package Client;
 
 import java.io.*;
 import java.net.*;
+import java.util.concurrent.Semaphore;
 
 public class PeerHeartbeat extends Thread {
     private DatagramSocket socket;
@@ -10,21 +11,13 @@ public class PeerHeartbeat extends Thread {
     private byte[] data = "heartbeat".getBytes();
     private int port;
     private int serverPort;
+    protected Semaphore mainSocketSemaphore;
 
-    public PeerHeartbeat(int port, InetAddress serverAddress, int serverPort)
+    public PeerHeartbeat(int port, InetAddress serverAddress, int serverPort, Semaphore mainsockSemaphore)
             throws SocketException {
 
-        // envia um packet
-        /*
-         * String vars[] = args[1].split("\\s");
-         * data = ("heartbeat " + vars[1]).getBytes(); // nickname
-         * addr = InetAddress.getByName(args[0]); // serverAddress
-         * porta = Integer.parseInt(args[2]) + 100; // port
-         */
-
-        // Uso: java p2pPeer <server> \"<message>\" <localport>")
-
         // cria um socket datagrama
+        this.mainSocketSemaphore = mainsockSemaphore;
         this.port = port;
         this.serverPort = serverPort;
         this.serverAddress = serverAddress; // serverAddress
@@ -35,9 +28,12 @@ public class PeerHeartbeat extends Thread {
     public void run() {
         while (true) {
             try {
-                packet = new DatagramPacket(this.data, data.length, this.serverAddress, this.serverPort);
+                byte[] data = "heartbeat".getBytes();
+                this.packet = new DatagramPacket(this.data, data.length, this.serverAddress, this.serverPort);
+                this.mainSocketSemaphore.acquire();
                 socket.send(packet);
-            } catch (IOException e) {
+                this.mainSocketSemaphore.release();
+            } catch (IOException | InterruptedException e) {
                 socket.close();
                 // abrir novo se o atual fechar...
             }

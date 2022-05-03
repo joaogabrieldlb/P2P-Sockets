@@ -37,7 +37,8 @@ public class PeerConsole implements Runnable {
             String content = new String(responsePacket.getData(), 0, responsePacket.getLength());
 
             if (content.equals("OK")) {
-                new PeerHeartbeat(this.localPort + 1, app.serverAddress, app.serverPort).start();
+                new PeerHeartbeat(this.localPort + 1, app.serverAddress, app.serverPort, this.app.mainSocketSemaphore)
+                        .start();
                 // new DirectoryTrack(socket)
                 // - verifica o diretório a cada x segundo para realizar operações de remove ou
                 // add no server.
@@ -47,7 +48,7 @@ public class PeerConsole implements Runnable {
                 // iniciar loop do console para interação com user.
                 this.startConsoleInterface();
             } else {
-                System.out.println("\t\nERROR: This client is already registered.\n");
+                System.out.println("\t\nERROR: This client IP is already registered.\n");
                 throw new IOException();
             }
 
@@ -81,7 +82,13 @@ public class PeerConsole implements Runnable {
 
             try {
                 str = obj.readLine();
+                System.out.println(str);
                 String vars[] = str.split("\\s");
+
+                for (String string : vars) {
+                    System.out.println(string);
+                }
+
                 switch (vars[0]) {
                     case "list-resources":
                         this.listResources(vars);
@@ -94,7 +101,7 @@ public class PeerConsole implements Runnable {
                         break;
                 }
 
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
             }
         }
     }
@@ -119,19 +126,23 @@ public class PeerConsole implements Runnable {
 
     }
 
-    private void listResources(String[] vars) throws IOException {
+    private void listResources(String[] vars) throws IOException, InterruptedException {
         String searchType = vars[1];
         String searchContent = String.join(" ", Arrays.copyOfRange(vars, 2, vars.length));
         byte[] request = new byte[1024];
-        request = String.join("|", searchType, searchContent).getBytes();
+        request = String.join("|", "list-resources", searchType, searchContent).getBytes();
         var packet = new DatagramPacket(request, request.length, this.app.serverAddress, this.app.serverPort);
+        this.app.mainSocketSemaphore.acquire();
         this.socket.send(packet);
+        this.app.mainSocketSemaphore.release();
 
         // Recebe o número de registros encontrados.
         byte[] response = new byte[1024];
         var responsePacket = new DatagramPacket(response, response.length);
         socket.receive(responsePacket);
-        int resourcesCount = Integer.getInteger(new String(responsePacket.getData(), 0, responsePacket.getLength()));
+        int resourcesCount = Integer.valueOf(new String(responsePacket.getData(), 0, responsePacket.getLength()));
+
+        System.out.println(resourcesCount);
 
         if (resourcesCount > 0) {
             for (int i = 0; i < resourcesCount; i++) {
@@ -142,7 +153,7 @@ public class PeerConsole implements Runnable {
                 System.out.println(resource);
             }
         } else {
-            System.out.println("Could not find files with this name.");
+            System.out.println("Could not find files with this name or hash.\n");
         }
 
     }

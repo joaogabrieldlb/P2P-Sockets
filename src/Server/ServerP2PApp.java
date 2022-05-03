@@ -34,9 +34,11 @@ public class ServerP2PApp {
         while (true) {
             try {
                 System.out.println("Esperando novo pacote:");
+
+                byte[] response = new byte[1024];
+                byte[] resource = new byte[1024];
                 String content = null;
                 // recebe datagrama
-                // socket.setSoTimeout(500);
                 this.packet = new DatagramPacket(resource, resource.length);
                 socket.receive(this.packet);
 
@@ -72,7 +74,7 @@ public class ServerP2PApp {
                     this.registerPeer(new Peer(peerAddr, peerPort));
                 }
 
-                if (vars[0].equals("list-resources") && vars.length > 3) {
+                if (vars[0].equals("list-resources") && vars.length >= 3) {
                     // list-resources|--name|XX
                     // list-resources|--hash|XX
                     this.listResources(vars[1], vars[2]);
@@ -96,12 +98,16 @@ public class ServerP2PApp {
         }
     }
 
-    private void listResources(String searchQuery, String searchTerm) throws IOException {
+    private void listResources(String searchQuery, String searchTerm) throws IOException, InterruptedException {
         List<String> resourceSearch = new ArrayList<>();
+        System.out.println("L,ASMD,A");
+        System.out.println(searchQuery);
+        System.out.println(searchTerm);
 
         if (searchQuery.equals("--name")) {
             for (Peer peer : this.connectedPeers) {
-                if (peer.getResources().size() > 0) {
+                if (peer.getResources().size() > 0
+                        && peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()) {
                     for (Resource resource : peer.getResources()) {
                         if (resource.getName().contains(searchTerm)) {
                             // nome|hash|ip|port
@@ -116,7 +122,8 @@ public class ServerP2PApp {
 
         if (searchQuery.equals("--hash")) {
             for (Peer peer : this.connectedPeers) {
-                if (peer.getResources().size() > 0) {
+                if (peer.getResources().size() > 0
+                        && peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()) {
                     for (Resource resource : peer.getResources()) {
                         if (resource.getHash().equalsIgnoreCase(searchTerm)) {
                             // nome|hash|ip|port
@@ -129,16 +136,24 @@ public class ServerP2PApp {
             }
         }
 
+        System.out.println(resourceSearch.size());
         // enviar size resourcesCount
         response = Integer.valueOf(resourceSearch.size()).toString().getBytes();
         packet = new DatagramPacket(response, response.length, peerAddr, peerPort);
+
+        this.connectedPeersSemaphore.acquire();
         socket.send(packet);
+        this.connectedPeersSemaphore.release();
+
         // Enviando todos os resources.
-        for (String resourceString : resourceSearch) {
-            response = resourceString.getBytes();
-            packet = new DatagramPacket(response, response.length, peerAddr, peerPort);
-            socket.send(packet);
+        if (resourceSearch.size() > 0) {
+            for (String resourceString : resourceSearch) {
+                response = resourceString.getBytes();
+                packet = new DatagramPacket(response, response.length, peerAddr, peerPort);
+                socket.send(packet);
+            }
         }
+
     }
 
     private void registerPeer(Peer newPeer) throws InterruptedException, IOException {
