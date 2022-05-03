@@ -1,6 +1,7 @@
 package Client;
 
 public class PeerClient extends Thread {
+    
     // Console de interação com o usuário.
     // Buscar recursos por nome -> Receber respostas.
 

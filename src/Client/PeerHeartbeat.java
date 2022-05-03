@@ -4,14 +4,14 @@ import java.io.*;
 import java.net.*;
 
 public class PeerHeartbeat extends Thread {
-    protected DatagramSocket socket = null;
-    protected DatagramPacket packet = null;
-    protected InetAddress serverAddress = null;
-    protected byte[] data = new byte[1024];
-    protected int port;
-    protected int serverPort;
+    private DatagramSocket socket;
+    private DatagramPacket packet;
+    private InetAddress serverAddress;
+    private byte[] data = "heartbeat".getBytes();
+    private int port;
+    private int serverPort;
 
-    public PeerHeartbeat(int localPort, InetAddress serverAddress, int serverPort, String localAddressIp)
+    public PeerHeartbeat(int port, InetAddress serverAddress, int serverPort)
             throws SocketException {
 
         // envia um packet
@@ -25,27 +25,27 @@ public class PeerHeartbeat extends Thread {
         // Uso: java p2pPeer <server> \"<message>\" <localport>")
 
         // cria um socket datagrama
+        this.port = port;
         this.serverPort = serverPort;
-        data = ("heartbeat " + localAddressIp).getBytes(); // nickname
         this.serverAddress = serverAddress; // serverAddress
-        socket = new DatagramSocket(serverPort);
+        this.socket = new DatagramSocket(this.port);
     }
 
     // "Uso: java p2pPeer <server> \"<message>\" <localport>");
     public void run() {
         while (true) {
             try {
-                packet = new DatagramPacket(data, data.length, serverAddress, this.serverPort);
+                packet = new DatagramPacket(this.data, data.length, this.serverAddress, this.serverPort);
                 socket.send(packet);
             } catch (IOException e) {
                 socket.close();
+                // abrir novo se o atual fechar...
             }
 
             try {
                 Thread.sleep(10000); // 10seg
             } catch (InterruptedException e) {
             }
-
         }
     }
 }

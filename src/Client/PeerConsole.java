@@ -8,31 +8,25 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.Files;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.Arrays;
 
 public class PeerConsole implements Runnable {
-
+    
+    private ClientP2PApp app;
     private int localPort;
     private DatagramPacket packet;
     private DatagramSocket socket;
-    private InetAddress serverAddress;
-    private int serverPort;
-    private Set<ClientResource> clientResources = new HashSet<>();
 
-    public PeerConsole(int localPort, InetAddress serverAddress, int serverPort, Set<ClientResource> clientResources)
-            throws Exception {
-        this.localPort = localPort;
-        this.socket = new DatagramSocket(localPort);
-        this.serverAddress = serverAddress;
-        this.serverPort = serverPort;
-        this.clientResources = clientResources;
+    public PeerConsole(ClientP2PApp app) throws Exception {
+        this.app = app;
+        this.localPort = this.app.localPort;
+        this.socket = this.app.mainSocket;
     }
 
     public void run() {
         // Solicita registro no servidor
         byte[] data = "register".getBytes();
-        this.packet = new DatagramPacket(data, data.length, this.serverAddress, this.serverPort);
+        this.packet = new DatagramPacket(data, data.length, app.serverAddress, app.serverPort);
         try {
             this.socket.send(packet); // Tenta se registrar no servidor.
 
@@ -42,14 +36,12 @@ public class PeerConsole implements Runnable {
             String content = new String(responsePacket.getData(), 0, responsePacket.getLength());
 
             if (content.equals("OK")) {
-                new PeerHeartbeat(this.localPort + 1, this.serverAddress, this.serverPort,
-                        InetAddress.getLocalHost().getHostAddress())
-                        .start();
+                new PeerHeartbeat(this.localPort + 1, app.serverAddress, app.serverPort).start();
                 // new DirectoryTrack(socket)
                 // - verifica o diretório a cada x segundo para realizar operações de remove ou
                 // add no server.
                 // Ler os arquivos e dar uma add-resource para cada um deles.
-                new ClientScanResources(this.socket, this.clientResources);
+                new ClientScanResources(this.app).start();
 
                 // iniciar loop do console para interação com user.
                 this.startConsoleInterface();
@@ -104,7 +96,6 @@ public class PeerConsole implements Runnable {
             } catch (IOException e) {
             }
         }
-
     }
 
     private void getResource(String[] vars) throws IOException {
@@ -128,11 +119,11 @@ public class PeerConsole implements Runnable {
     }
 
     private void listResources(String[] vars) throws IOException {
-        String searchType = vars[0];
-        String searchContent = vars[1];
+        String searchType = vars[1];
+        String searchContent = String.join(" ", Arrays.copyOfRange(vars, 2, vars.length));
         byte[] request = new byte[1024];
-        request = String.join(" ", searchType, searchContent).getBytes();
-        var packet = new DatagramPacket(request, request.length, this.serverAddress, this.serverPort);
+        request = String.join("|", searchType, searchContent).getBytes();
+        var packet = new DatagramPacket(request, request.length, this.app.serverAddress, this.app.serverPort);
         this.socket.send(packet);
 
         // Recebe o número de registros encontrados.
