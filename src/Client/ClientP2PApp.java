@@ -12,7 +12,7 @@ public class ClientP2PApp {
     private int localPort;
     private InetAddress serverAddress;
     private int serverPort;
-    private Set<ClientResource> clienteResources = new HashSet<>();
+    private Set<ClientResource> clientResources = new HashSet<>();
 
     public ClientP2PApp(String localPort, String serverAddress, String serverPort) throws Exception {
         this.localPort = Integer.parseInt(localPort);
@@ -22,8 +22,9 @@ public class ClientP2PApp {
     }
 
     public void run() throws IOException {
-        new PeerConsole(this.localPort, serverAddress, serverPort).run(); // Interações com usuário via console
-                                                                          // comunicando-se com o servidor.
+        new PeerConsole(this.localPort, serverAddress, serverPort, clientResources).run(); // Interações com usuário via
+                                                                                           // console
+        // comunicando-se com o servidor.
         // Solicita registro no servidor
         // new DirectoryTrack(newPort)
         // - verifica o diretório a cada x segundo para realizar operações de remov e ou
@@ -39,15 +40,15 @@ public class ClientP2PApp {
         // 2. usuario deseja "baixar" recurso de outro peer
         // get-resource <hash> <ip_address> <port>
 
-        this.localPort++;
-        new PeerHeartbeat((this.localPort), this.serverAddress, this.serverPort,
-                InetAddress.getLocalHost().getHostAddress())
-                .start();
+        /*
+         * new PeerHeartbeat((this.localPort), this.serverAddress, this.serverPort,
+         * InetAddress.getLocalHost().getHostAddress())
+         * .start();
+         */
         // alterar logica servidor porta recebida do heartbeat - 1 para identificar o
         // peer -> DONE
 
-        this.localPort++;
-        new PeerReplyFile(this.localPort).start(); // Fica esperando conexões diretos de P2P
+        new PeerReplyFile(this.localPort + 2).start(); // Fica esperando conexões diretos de P2P
         // aguarda receber pacote de outro peer
         // - new PeerThread(newPort).start();
         // - recebe o arquivo
@@ -57,5 +58,4 @@ public class ClientP2PApp {
 
     }
 
-    }
 }

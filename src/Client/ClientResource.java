@@ -1,45 +1,31 @@
 package Client;
 
 import java.io.File;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
+
+import Utils.ResourceHash;
 
 public class ClientResource {
 
     private String name;
     private String hash;
-    private String path;
     private boolean isRegistred;
     private File file;
 
-    public ClientResource(String name, String hash, String path, boolean isRegistred, File file) {
-        this.name = name;
-        this.hash = hash;
-        this.path = path;
-        this.isRegistred = isRegistred;
+    public ClientResource(File file) throws NoSuchAlgorithmException, IOException {
         this.file = file;
+        this.name = this.file.getName();
+        this.hash = ResourceHash.computeMD5(this.file);
+        this.isRegistred = false;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getHash() {
         return hash;
-    }
-
-    public void setHash(String hash) {
-        this.hash = hash;
-    }
-
-    public String getPath() {
-        return path;
-    }
-
-    public void setPath(String path) {
-        this.path = path;
     }
 
     public boolean isRegistred() {
@@ -54,11 +40,6 @@ public class ClientResource {
         return file;
     }
 
-    public void setFile(File file) {
-        this.file = file;
-    }
-
-    @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
