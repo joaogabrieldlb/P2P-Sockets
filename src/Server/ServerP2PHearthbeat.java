@@ -4,7 +4,7 @@ import java.net.InetAddress;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
-public class ServerP2PHearthbeat implements Runnable {
+public class ServerP2PHearthbeat extends Thread {
 
     private Set<Peer> connectedPeers;
     private Semaphore connectedPeersSemaphore;
