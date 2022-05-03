@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 
 public class ClientScanResources extends Thread {
 
-    private final String RESOURCE_FOLDER = "./resources/";
+    private final String RESOURCE_FOLDER = "./resources/"; // Pasta em bin/resources -> rever isso
     private DatagramSocket socket;
     private DatagramPacket packet;
     private ClientP2PApp app;
@@ -81,16 +81,19 @@ public class ClientScanResources extends Thread {
     }
 
     private void addResource(ClientResource newResource) throws IOException {
+
         String messege = "add-resource|" + newResource.toString();
         this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress,
                 this.app.serverPort);
         this.socket.send(packet);
 
         try {
-            socket.setSoTimeout(500);
+            socket.setSoTimeout(5000);
+            byte[] response = new byte[1024];
+            this.packet = new DatagramPacket(response, response.length, this.app.serverAddress, this.app.serverPort);
             socket.receive(packet);
 
-            String content = new String(packet.getData());
+            String content = new String(packet.getData()).trim();
             if (content.equals("OK")) {
                 newResource.setRegistred(true);
             }
@@ -105,14 +108,17 @@ public class ClientScanResources extends Thread {
         this.socket.send(packet);
 
         try {
-            socket.setSoTimeout(500);
+            socket.setSoTimeout(5000);
+            byte[] response = new byte[1024];
+            this.packet = new DatagramPacket(response, response.length, this.app.serverAddress, this.app.serverPort);
             socket.receive(packet);
 
-            String content = new String(packet.getData());
+            String content = new String(packet.getData()).trim();
             if (content.equals("OK")) {
                 this.app.clientResources.remove(removedResource);
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

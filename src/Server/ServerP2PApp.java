@@ -53,7 +53,7 @@ public class ServerP2PApp {
                 System.out.println("Size: " + vars.length);
 
                 // add-resource|texto.txt|AJLKSDH1J23ASDAS
-                if (vars[0].equals("add-resource") && vars.length > 3) {
+                if (vars[0].equals("add-resource") && vars.length >= 3) {
                     // name|hash
                     String resourceName = vars[1];
                     String resourceHash = vars[2];
@@ -62,7 +62,7 @@ public class ServerP2PApp {
                 }
 
                 // remove-resource|texto.txt|AJLKSDH1J23ASDAS
-                if (vars[0].equals("remove-resource") && vars.length > 3) {
+                if (vars[0].equals("remove-resource") && vars.length >= 3) {
                     // name|hash
                     String resourceName = vars[1];
                     String resourceHash = vars[2];
@@ -100,14 +100,10 @@ public class ServerP2PApp {
 
     private void listResources(String searchQuery, String searchTerm) throws IOException, InterruptedException {
         List<String> resourceSearch = new ArrayList<>();
-        System.out.println("L,ASMD,A");
-        System.out.println(searchQuery);
-        System.out.println(searchTerm);
 
         if (searchQuery.equals("--name")) {
             for (Peer peer : this.connectedPeers) {
-                if (peer.getResources().size() > 0
-                        && peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()) {
+                if (peer.getResources().size() > 0) {
                     for (Resource resource : peer.getResources()) {
                         if (resource.getName().contains(searchTerm)) {
                             // nome|hash|ip|port
@@ -136,7 +132,6 @@ public class ServerP2PApp {
             }
         }
 
-        System.out.println(resourceSearch.size());
         // enviar size resourcesCount
         response = Integer.valueOf(resourceSearch.size()).toString().getBytes();
         packet = new DatagramPacket(response, response.length, peerAddr, peerPort);
