@@ -11,6 +11,7 @@ public class ServerP2PHearthbeat implements Runnable {
 
     public ServerP2PHearthbeat(Set<Peer> connectedPeers, Semaphore connectedPeersSemaphore) {
         this.connectedPeers = connectedPeers;
+        this.connectedPeersSemaphore = connectedPeersSemaphore;
     }
 
     @Override
