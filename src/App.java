@@ -19,7 +19,7 @@ public class App {
                 } catch (SocketException ex) {
                     System.out.println("\n\tERROR: Port already being used!\n");
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    System.out.println(ex.getMessage());
                 }
                 break;
             case "CLIENT":
@@ -32,7 +32,7 @@ public class App {
                 } catch (SocketException ex) {
                     System.out.println("\n\tERROR: Port already being used!\n");
                 } catch (Exception ex) {
-                    ex.printStackTrace();
+                    System.out.println(ex.getMessage());
                 }
                 break;
             default:

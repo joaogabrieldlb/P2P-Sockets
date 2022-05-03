@@ -37,6 +37,7 @@ public class ServerP2PHearthbeat implements Runnable {
     }
 
     public boolean receivedHearbeat(InetAddress peerAddr, int peerPort) {
+        peerPort--; // Porta recebeida é diferente da porta registrada no Peer (+1).
         boolean reset = false;
         for (Peer peer : connectedPeers) {
             if (peer.getIpAddress().equals(peerAddr) && peer.getPort().equals(peerPort)) {

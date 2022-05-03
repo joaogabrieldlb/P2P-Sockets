@@ -9,8 +9,11 @@ public class PeerHeartbeat extends Thread {
     protected InetAddress serverAddress = null;
     protected byte[] data = new byte[1024];
     protected int port;
+    protected int serverPort;
 
-    public PeerHeartbeat(InetAddress serverAddress, int serverPort, String localAddressIp) throws IOException {
+    public PeerHeartbeat(int localPort, InetAddress serverAddress, int serverPort, String localAddressIp)
+            throws SocketException {
+
         // envia um packet
         /*
          * String vars[] = args[1].split("\\s");
@@ -19,7 +22,10 @@ public class PeerHeartbeat extends Thread {
          * porta = Integer.parseInt(args[2]) + 100; // port
          */
 
+        // Uso: java p2pPeer <server> \"<message>\" <localport>")
+
         // cria um socket datagrama
+        this.serverPort = serverPort;
         data = ("heartbeat " + localAddressIp).getBytes(); // nickname
         this.serverAddress = serverAddress; // serverAddress
         socket = new DatagramSocket(serverPort);
@@ -29,7 +35,7 @@ public class PeerHeartbeat extends Thread {
     public void run() {
         while (true) {
             try {
-                packet = new DatagramPacket(data, data.length, serverAddress, 9000);
+                packet = new DatagramPacket(data, data.length, serverAddress, this.serverPort);
                 socket.send(packet);
             } catch (IOException e) {
                 socket.close();

@@ -8,7 +8,7 @@ public class PeerClient extends Thread {
     // Enquanto estiver recebendo um resource o arquivo deve ficar salvo em uma
     // pasta temp.
     // Depois de receber o resource por completo, salvar na pasta de resources.
-    public PeerClient() {
+    public PeerClient(int localPort) {
 
     }
 

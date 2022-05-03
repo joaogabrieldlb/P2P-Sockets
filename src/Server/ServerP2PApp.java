@@ -12,13 +12,13 @@ import java.util.concurrent.Semaphore;
 
 public class ServerP2PApp {
 
-    InetAddress peerAddr;
-    int peerPort;
-    DatagramSocket socket;
-    Set<Peer> connectedPeers = new HashSet<>();
-    DatagramPacket packet;
-    Semaphore connectedPeersSemaphore = new Semaphore(1);
-    ServerP2PHearthbeat hearthbeat;
+    private InetAddress peerAddr;
+    private int peerPort;
+    private DatagramSocket socket;
+    private Set<Peer> connectedPeers = new HashSet<>();
+    private DatagramPacket packet;
+    private Semaphore connectedPeersSemaphore = new Semaphore(1);
+    private ServerP2PHearthbeat hearthbeat;
 
     byte[] resource = new byte[1024];
     byte[] response = new byte[1024];
