@@ -8,7 +8,7 @@ public class PeerHeartbeat extends Thread {
     private DatagramSocket socket;
     private DatagramPacket packet;
     private InetAddress serverAddress;
-    private byte[] data = "heartbeat".getBytes();
+    private final byte[] MESSAGE = "heartbeat".getBytes();
     private int port;
     private int serverPort;
     protected Semaphore mainSocketSemaphore;
@@ -25,11 +25,11 @@ public class PeerHeartbeat extends Thread {
     }
 
     // "Uso: java p2pPeer <server> \"<message>\" <localport>");
+    @Override
     public void run() {
         while (true) {
             try {
-                byte[] data = "heartbeat".getBytes();
-                this.packet = new DatagramPacket(this.data, data.length, this.serverAddress, this.serverPort);
+                this.packet = new DatagramPacket(this.MESSAGE, MESSAGE.length, this.serverAddress, this.serverPort);
                 this.mainSocketSemaphore.acquire();
                 socket.send(packet);
                 this.mainSocketSemaphore.release();

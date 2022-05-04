@@ -14,6 +14,8 @@ public class ClientP2PApp {
     protected int serverPort;
     protected Set<ClientResource> clientResources = new HashSet<>();
     protected Semaphore mainSocketSemaphore = new Semaphore(1);
+    protected Semaphore clientResourceSemaphore = new Semaphore(1);
+
 
     public ClientP2PApp(String localPort, String serverAddress, String serverPort) throws Exception {
         this.localPort = Integer.parseInt(localPort);
@@ -48,7 +50,7 @@ public class ClientP2PApp {
         // alterar logica servidor porta recebida do heartbeat - 1 para identificar o
         // peer -> DONE
 
-        new PeerReplyFile(this.localPort + 2).start(); // Fica esperando conexões diretos de P2P
+        new PeerListener(this.localPort + 2).start(); // Fica esperando conexões diretos de P2P
         // aguarda receber pacote de outro peer
         // - new PeerThread(newPort).start();
         // - recebe o arquivo
