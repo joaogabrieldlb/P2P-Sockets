@@ -42,7 +42,7 @@ public class PeerListener extends Thread {
                 String vars[] = content.split("\\|");
 
                 // get-resouce|AJLKSDH1J23ASDAS
-                if (vars[0].equals("get-resource") && vars.length == 4) {
+                if (vars[0].equals("get-resource") && vars.length >= 2) {
                     // name|hash
                     String resourceHash = vars[1];
 

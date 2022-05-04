@@ -84,13 +84,12 @@ public class PeerConsole implements Runnable {
     private void getResource(String[] vars) throws IOException {
         String operation = vars[0];
         String hash = vars[1];
-        String ip = vars[2];
-        String port = vars[3];
+        InetAddress remotePeerIpAddress = InetAddress.getByName(vars[2]);
+        int port = Integer.parseInt(vars[3]) + 2;
         byte[] request = new byte[1024];
-        InetAddress remotePeerIpAddress = InetAddress.getByName(ip);
 
-        request = String.join("|", operation, hash, ip, port).getBytes();
-        var packet = new DatagramPacket(request, request.length, remotePeerIpAddress, Integer.valueOf(port) + 2);
+        request = String.join("|", operation, hash).getBytes();
+        var packet = new DatagramPacket(request, request.length, remotePeerIpAddress, port);
         // Envia uma solicitação de recurso.
         this.socket.send(packet);
 
