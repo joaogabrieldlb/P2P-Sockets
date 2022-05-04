@@ -11,14 +11,12 @@ public class PeerListener extends Thread {
     private ClientP2PApp app;
     private DatagramSocket socketListen;
     private DatagramPacket packet;
-    private int port;
     private InetAddress clientAddress;
     private int clientPort;
     private int nextFilePort;
 
     public PeerListener(ClientP2PApp app, int port) throws SocketException {
         this.app = app;
-        this.port = port;
         this.socketListen = new DatagramSocket(port);
         this.nextFilePort = port + 10;
     }

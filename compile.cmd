@@ -1,0 +1,1 @@
+javac ./src/*.java -sourcepath ./src -d ./bin

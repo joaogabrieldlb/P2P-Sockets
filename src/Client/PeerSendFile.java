@@ -9,7 +9,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.Arrays;
 
 public class PeerSendFile extends Thread {
 
@@ -66,16 +65,16 @@ public class PeerSendFile extends Thread {
              * clientSocket.close();
              */
             Socket clientSocket = serverSocket.accept();
-            byte[] mybytearray = new byte[(int) localResource.getFile().length()];
+            byte[] buffer = new byte[(int) localResource.getFile().length()];
             BufferedInputStream bis = new BufferedInputStream(new FileInputStream(localResource.getFile()));
-            bis.read(mybytearray, 0, mybytearray.length);
+            bis.read(buffer, 0, buffer.length);
             OutputStream os = clientSocket.getOutputStream();
-            os.write(mybytearray, 0, mybytearray.length);
+            os.write(buffer, 0, buffer.length);
             os.flush();
             clientSocket.close();
-
         } catch (IOException ex) {
-            System.out.println("Can't accept client connection. ");
+            System.out.println("Connection error.");
         }
+
     }
 }

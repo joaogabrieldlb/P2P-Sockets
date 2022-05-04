@@ -35,20 +35,20 @@ public class PeerReceiveFile extends Thread {
 
     public void run() {
         try {
-            Socket sock = new Socket(this.remotePeerIp.getHostAddress(), this.remotePeerPort);
-            byte[] mybytearray = new byte[1024];
-            InputStream is = sock.getInputStream();
+            Socket clientSocket = new Socket(this.remotePeerIp.getHostAddress(), this.remotePeerPort);
+            byte[] buffer = new byte[1024];
+            InputStream is = clientSocket.getInputStream();
             FileOutputStream fos = new FileOutputStream(this.remoteFileName);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             int bytesRead;
-            while ((bytesRead = is.read(mybytearray, 0, mybytearray.length)) != -1) {
-                if (bytesRead < mybytearray.length) {
-                    mybytearray = Arrays.copyOf(mybytearray, bytesRead);
+            while ((bytesRead = is.read(buffer, 0, buffer.length)) != -1) {
+                if (bytesRead < buffer.length) {
+                    buffer = Arrays.copyOf(buffer, bytesRead);
                 }
-                bos.write(mybytearray, 0, bytesRead);
+                bos.write(buffer, 0, bytesRead);
             }
             bos.close();
-            sock.close();
+            clientSocket.close();
 
             File receivedFile = new File(this.remoteFileName);
             String receivedFileHash = ResourceHash.computeMD5(receivedFile);
