@@ -51,7 +51,7 @@ public class ClientScanResources extends Thread {
                     }
                 }
                 // verifica os removidos
-                this.app.clientResourceSemaphore.acquire();
+
                 for (ClientResource resource : this.app.clientResources) {
                     if (!filesInFolder.contains(resource.getFile())) {
                         // envia remove-resource para o server
@@ -65,7 +65,6 @@ public class ClientScanResources extends Thread {
                         this.app.mainSocketSemaphore.release();
                     }
                 }
-                this.app.clientResourceSemaphore.release();
 
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();
@@ -100,7 +99,9 @@ public class ClientScanResources extends Thread {
 
             String content = new String(packet.getData()).trim();
             if (content.equals("OK")) {
+                this.app.clientResourceSemaphore.acquire();
                 newResource.setRegistred(true);
+                this.app.clientResourceSemaphore.release();
             }
         } catch (Exception e) {
         }
@@ -120,7 +121,9 @@ public class ClientScanResources extends Thread {
 
             String content = new String(packet.getData()).trim();
             if (content.equals("OK")) {
+                this.app.clientResourceSemaphore.acquire();
                 this.app.clientResources.remove(removedResource);
+                this.app.clientResourceSemaphore.release();
             }
         } catch (Exception e) {
             e.printStackTrace();

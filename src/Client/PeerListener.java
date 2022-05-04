@@ -25,7 +25,6 @@ public class PeerListener extends Thread {
 
     @Override
     public void run() {
-        System.out.println("Escutando na porta: " + port);
         byte[] response = new byte[1024];
         byte[] resource = new byte[1024];
         String content = null;
@@ -40,15 +39,12 @@ public class PeerListener extends Thread {
                 // processa o que foi recebido, adicionando a uma lista
                 clientAddress = packet.getAddress();
                 clientPort = packet.getPort();
-                System.out.print(String.format("[ %s:%d ] Pacote recebido.", clientAddress.toString(), clientPort));
 
                 content = new String(packet.getData()).trim();
-                System.out.println("\nContent: " + content);
                 String vars[] = content.split("\\|");
-                System.out.println("Size: " + vars.length);
 
                 // get-resouce|AJLKSDH1J23ASDAS
-                if (vars[0].equals("get-resource") && vars.length >= 2) {
+                if (vars[0].equals("get-resource") && vars.length == 4) {
                     // name|hash
                     String resourceHash = vars[1];
 

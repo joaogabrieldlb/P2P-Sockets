@@ -46,23 +46,34 @@ public class PeerSendFile extends Thread {
 
         // Aguarda uma conexão.
         try {
+            /*
+             * Socket clientSocket = serverSocket.accept();
+             * byte[] buffer = new byte[1024];
+             * BufferedInputStream bufferedInputStream = new BufferedInputStream(
+             * new FileInputStream(localResource.getFile()));
+             * OutputStream outputStream = clientSocket.getOutputStream();
+             * 
+             * int bytesRead;
+             * while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
+             * // tratamento do buffer para o último pacote
+             * if (bytesRead < buffer.length) {
+             * buffer = Arrays.copyOf(buffer, bytesRead);
+             * }
+             * bufferedInputStream.read(buffer, 0, buffer.length);
+             * outputStream.write(buffer, 0, buffer.length);
+             * }
+             * outputStream.flush();
+             * clientSocket.close();
+             */
             Socket clientSocket = serverSocket.accept();
-            byte[] buffer = new byte[1024];
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(
-                    new FileInputStream(localResource.getFile()));
-            OutputStream outputStream = clientSocket.getOutputStream();
-
-            int bytesRead;
-            while ((bytesRead = bufferedInputStream.read(buffer)) != -1) {
-                // tratamento do buffer para o último pacote
-                if (bytesRead < buffer.length) {
-                    buffer = Arrays.copyOf(buffer, bytesRead);
-                }
-                bufferedInputStream.read(buffer, 0, buffer.length);
-                outputStream.write(buffer, 0, buffer.length);
-            }
-            outputStream.flush();
+            byte[] mybytearray = new byte[(int) localResource.getFile().length()];
+            BufferedInputStream bis = new BufferedInputStream(new FileInputStream(localResource.getFile()));
+            bis.read(mybytearray, 0, mybytearray.length);
+            OutputStream os = clientSocket.getOutputStream();
+            os.write(mybytearray, 0, mybytearray.length);
+            os.flush();
             clientSocket.close();
+
         } catch (IOException ex) {
             System.out.println("Can't accept client connection. ");
         }

@@ -1,13 +1,11 @@
 package Client;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.nio.file.Files;
 import java.util.Arrays;
 
 public class PeerConsole implements Runnable {
@@ -25,7 +23,6 @@ public class PeerConsole implements Runnable {
 
     public void run() {
         // Solicita registro no servidor
-
         try {
             byte[] data = "register".getBytes();
             this.packet = new DatagramPacket(data, data.length, app.serverAddress, app.serverPort);
@@ -39,11 +36,8 @@ public class PeerConsole implements Runnable {
             if (content.equals("OK")) {
                 new PeerHeartbeat(this.localPort + 1, app.serverAddress, app.serverPort, this.app.mainSocketSemaphore)
                         .start();
-                // new DirectoryTrack(socket)
-                // - verifica o diretório a cada x segundo para realizar operações de remove ou
-                // add no server.
-                // Ler os arquivos e dar uma add-resource para cada um deles.
                 new ClientScanResources(this.app).start();
+                new PeerListener(app, this.localPort + 2).start();
 
                 // iniciar loop do console para interação com user.
                 this.startConsoleInterface();
@@ -56,19 +50,6 @@ public class PeerConsole implements Runnable {
             System.out.println("\n\tERROR: Register to the server was not successful!\n");
             System.exit(1);
         }
-
-        // imprime comandos disponiveis no PeerConsole
-        // aguarda input do usuário
-
-        // 1. usuario deseja listar recursos por um critério de busca e por fileName
-        // (list-resources)
-        // list-resources --name XX
-        // list-resources --hash XX
-
-        // 2. usuario deseja "baixar" recurso de outro peer
-        // get-resource <hash> <ip_address> <port>
-        // new PeerRequestFile(this.localport + 3).start();
-
     }
 
     private void startConsoleInterface() {
@@ -76,18 +57,13 @@ public class PeerConsole implements Runnable {
         String str = "";
 
         while (true) {
-            System.out.println("Available Operations");
-            System.out.println("1 - list-resources --name XXX | list-resources --hash XXX");
-            System.out.println("2 - get-resource <hash> <ip_address> <port>");
+            System.out.println("\nAvailable Operations");
+            System.out.println("- list-resources --name XXX | list-resources --hash XXX");
+            System.out.println("- get-resource <hash> <ip_address> <port>");
 
             try {
                 str = obj.readLine();
-                System.out.println(str);
                 String vars[] = str.split("\\s");
-
-                for (String string : vars) {
-                    System.out.println(string);
-                }
 
                 switch (vars[0]) {
                     case "list-resources":
@@ -100,7 +76,6 @@ public class PeerConsole implements Runnable {
                         System.out.println("Invalid operation.");
                         break;
                 }
-
             } catch (IOException | InterruptedException e) {
             }
         }
@@ -115,7 +90,7 @@ public class PeerConsole implements Runnable {
         InetAddress remotePeerIpAddress = InetAddress.getByName(ip);
 
         request = String.join("|", operation, hash, ip, port).getBytes();
-        var packet = new DatagramPacket(request, request.length, remotePeerIpAddress, Integer.getInteger(port));
+        var packet = new DatagramPacket(request, request.length, remotePeerIpAddress, Integer.valueOf(port) + 2);
         // Envia uma solicitação de recurso.
         this.socket.send(packet);
 
@@ -124,11 +99,12 @@ public class PeerConsole implements Runnable {
         byte[] response = new byte[1024];
         var responsePacket = new DatagramPacket(response, response.length);
         socket.receive(responsePacket);
-        String content = new String(responsePacket.getData(), 0, responsePacket.getLength());
+        String content = new String(responsePacket.getData(), 0, responsePacket.getLength()).trim();
 
         String varsResponse[] = content.split("\\|");
-        if (varsResponse[0] == "OK") {
-            new PeerReceiveFile(remotePeerIpAddress, varsResponse[1], hash, varsResponse[2]);
+
+        if (varsResponse[0].equals("OK")) {
+            new PeerReceiveFile(remotePeerIpAddress, varsResponse[1], hash, varsResponse[2]).start();
         } else {
             System.out.println("File not available.");
         }
@@ -150,14 +126,15 @@ public class PeerConsole implements Runnable {
         socket.receive(responsePacket);
         int resourcesCount = Integer.valueOf(new String(responsePacket.getData(), 0, responsePacket.getLength()));
 
-        System.out.println(resourcesCount);
-
         if (resourcesCount > 0) {
+            System.out.println("\n File Name | HASH | Peer IP | Port");
+            System.out.println();
             for (int i = 0; i < resourcesCount; i++) {
                 // Aguarda resposta do server para X resources encontrados.
                 responsePacket = new DatagramPacket(response, response.length);
                 socket.receive(responsePacket);
-                String resource = new String(responsePacket.getData(), 0, responsePacket.getLength());
+                String resource = new String(responsePacket.getData(), 0, responsePacket.getLength())
+                        .replace("|", " ");
                 System.out.println(resource);
             }
         } else {

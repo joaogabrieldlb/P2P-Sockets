@@ -27,6 +27,7 @@ public class ServerP2PHearthbeat extends Thread {
                 for (Peer peer : this.connectedPeers) {
                     int timeout = peer.decrementTimeOut();
                     if (timeout == 0) {
+                        System.out.println("Peer removido por inatividade: " + peer.toString());
                         this.connectedPeers.remove(peer);
                     }
                 }
@@ -40,17 +41,19 @@ public class ServerP2PHearthbeat extends Thread {
     public boolean receivedHearbeat(InetAddress peerAddr, int heartbeatPort) {
         int peerPort = heartbeatPort - 1; // Porta recebeida é diferente da porta registrada no Peer (+1).
         boolean reset = false;
-        for (Peer peer : connectedPeers) {
-            if (peer.getIpAddress().equals(peerAddr) && peer.getPort().equals(peerPort)) {
-                try {
-                    connectedPeersSemaphore.acquire();
+        try {
+            connectedPeersSemaphore.acquire();
+            for (Peer peer : this.connectedPeers) {
+                if (peer.getIpAddress().equals(peerAddr) && peer.getPort().equals(peerPort)) {
                     peer.resetTimeOut();
                     reset = true;
-                    connectedPeersSemaphore.release();
-                } catch (InterruptedException e) {
+                    break;
                 }
-                break;
             }
+            connectedPeersSemaphore.release();
+        } catch (InterruptedException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
         }
         return reset;
     }

@@ -49,7 +49,8 @@ public class ClientP2PApp {
         // alterar logica servidor porta recebida do heartbeat - 1 para identificar o
         // peer -> DONE
 
-        new PeerListener(this, this.localPort + 2).start(); // Fica esperando conexões diretos de P2P
+        // new PeerListener(this, this.localPort + 2).start(); // Fica esperando
+        // conexões diretos de P2P
         // aguarda receber pacote de outro peer
         // - new PeerThread(newPort).start();
         // - recebe o arquivo

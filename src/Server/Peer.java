@@ -67,7 +67,13 @@ public class Peer {
                 return false;
         } else if (!ipAddress.equals(other.ipAddress))
             return false;
+        else if (this.port != other.port)
+            return false;
         return true;
     }
 
+    @Override
+    public String toString() {
+        return "Peer [ipAddress=" + ipAddress.getHostAddress() + ", port=" + port + "]";
+    }
 }

@@ -45,13 +45,12 @@ public class ServerP2PApp {
                 // processa o que foi recebido, adicionando a uma lista
                 peerAddr = packet.getAddress();
                 peerPort = packet.getPort();
-                System.out.print(String.format("[ %s:%d ] Recebi um pacote!", peerAddr.toString(), peerPort));
-
                 content = new String(packet.getData()).trim();
-                System.out.println("\nContent: " + content);
-                String vars[] = content.split("\\|");
-                System.out.println("Size: " + vars.length);
+                System.out
+                        .print(String.format("[ %s:%d ] Pacote Recebido: %s\n", peerAddr.toString(), peerPort,
+                                content));
 
+                String vars[] = content.split("\\|");
                 // add-resource|texto.txt|AJLKSDH1J23ASDAS
                 if (vars[0].equals("add-resource") && vars.length >= 3) {
                     // name|hash
@@ -103,7 +102,9 @@ public class ServerP2PApp {
 
         if (searchQuery.equals("--name")) {
             for (Peer peer : this.connectedPeers) {
-                if (peer.getResources().size() > 0) {
+                if (peer.getResources().size() > 0
+                        && (peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()
+                                && peer.getPort() != this.peerPort)) {
                     for (Resource resource : peer.getResources()) {
                         if (resource.getName().contains(searchTerm)) {
                             // nome|hash|ip|port
@@ -119,7 +120,8 @@ public class ServerP2PApp {
         if (searchQuery.equals("--hash")) {
             for (Peer peer : this.connectedPeers) {
                 if (peer.getResources().size() > 0
-                        && peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()) {
+                        && (peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()
+                                && peer.getPort() != this.peerPort)) {
                     for (Resource resource : peer.getResources()) {
                         if (resource.getHash().equalsIgnoreCase(searchTerm)) {
                             // nome|hash|ip|port
@@ -165,9 +167,11 @@ public class ServerP2PApp {
         socket.send(packet);
     }
 
-    private void addResource(String resourceName, String resourceHash) throws InterruptedException, IOException {
+    private void addResource(String resourceName, String resourceHash)
+            throws InterruptedException, IOException {
         for (Peer peer : this.connectedPeers) {
-            if (peer.getIpAddress().getHostAddress().equals(peerAddr.getHostAddress())) {
+            if (peer.getIpAddress().getHostAddress().equals(this.peerAddr.getHostAddress())
+                    && peer.getPort() == this.peerPort) {
                 this.connectedPeersSemaphore.acquire();
                 peer.addResource(new Resource(resourceName, resourceHash, peer));
                 this.connectedPeersSemaphore.release();
