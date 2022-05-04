@@ -40,7 +40,10 @@ public class ClientScanResources extends Thread {
                 // adiciona no clientresource e registra no server
                 for (File file : filesInFolder) {
                     ClientResource resource = new ClientResource(file);
-                    if (this.app.clientResources.add(resource)) {
+                    this.app.clientResourceSemaphore.acquire();
+                    boolean resouceAdd = this.app.clientResources.add(resource);
+                    this.app.clientResourceSemaphore.release();
+                    if (resouceAdd) {
                         // envia add-resource para o server e set isRegistered true
                         this.app.mainSocketSemaphore.acquire();
                         addResource(resource);
@@ -48,6 +51,7 @@ public class ClientScanResources extends Thread {
                     }
                 }
                 // verifica os removidos
+                this.app.clientResourceSemaphore.acquire();
                 for (ClientResource resource : this.app.clientResources) {
                     if (!filesInFolder.contains(resource.getFile())) {
                         // envia remove-resource para o server
@@ -61,6 +65,7 @@ public class ClientScanResources extends Thread {
                         this.app.mainSocketSemaphore.release();
                     }
                 }
+                this.app.clientResourceSemaphore.release();
 
             } catch (NoSuchAlgorithmException e) {
                 e.printStackTrace();

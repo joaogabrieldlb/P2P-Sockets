@@ -112,18 +112,26 @@ public class PeerConsole implements Runnable {
         String ip = vars[2];
         String port = vars[3];
         byte[] request = new byte[1024];
-        request = String.join(" ", operation, hash, ip, port).getBytes();
-        var packet = new DatagramPacket(request, request.length, InetAddress.getByName(ip), Integer.getInteger(port));
+        InetAddress remotePeerIpAddress = InetAddress.getByName(ip);
+
+        request = String.join("|", operation, hash, ip, port).getBytes();
+        var packet = new DatagramPacket(request, request.length, remotePeerIpAddress, Integer.getInteger(port));
         // Envia uma solicitação de recurso.
         this.socket.send(packet);
 
-        // Recebe o número de registros encontrados.
+        // Recebe o status do arquivo solicitado e a porta p/conectar (Ex:
+        // OK|7895|file.txt)
         byte[] response = new byte[1024];
         var responsePacket = new DatagramPacket(response, response.length);
         socket.receive(responsePacket);
-        // TODO -> Salvar arquivo
-        Files.write(new File("./file.txt").toPath(), response);
+        String content = new String(responsePacket.getData(), 0, responsePacket.getLength());
 
+        String varsResponse[] = content.split("\\|");
+        if (varsResponse[0] == "OK") {
+            new PeerReceiveFile(remotePeerIpAddress, varsResponse[1], hash, varsResponse[2]);
+        } else {
+            System.out.println("File not available.");
+        }
     }
 
     private void listResources(String[] vars) throws IOException, InterruptedException {

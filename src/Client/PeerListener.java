@@ -5,11 +5,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.concurrent.Semaphore;
-
-import javax.management.relation.RelationSupport;
-
-import Server.Resource;
 
 public class PeerListener extends Thread {
 
@@ -31,16 +26,17 @@ public class PeerListener extends Thread {
     @Override
     public void run() {
         System.out.println("Escutando na porta: " + port);
-
         byte[] response = new byte[1024];
         byte[] resource = new byte[1024];
         String content = null;
+
+        // laço de escuta
         while (true) {
-                try {
+            try {
                 // recebe datagrama
                 this.packet = new DatagramPacket(resource, resource.length);
                 socketListen.receive(this.packet);
-                    
+
                 // processa o que foi recebido, adicionando a uma lista
                 clientAddress = packet.getAddress();
                 clientPort = packet.getPort();
@@ -55,7 +51,7 @@ public class PeerListener extends Thread {
                 if (vars[0].equals("get-resource") && vars.length >= 2) {
                     // name|hash
                     String resourceHash = vars[1];
-                    
+
                     // procura resource
                     ClientResource localResource = localizaResource(resourceHash);
                     if (localResource == null) {
@@ -63,24 +59,40 @@ public class PeerListener extends Thread {
                         packet = new DatagramPacket(response, response.length, clientAddress, clientPort);
                         socketListen.send(packet);
                     }
-                    
-                    // envia resource (abre thread de envio com socket stream)
-                    new PeerReplyFile(nextFilePort++, clientAddress, clientPort, localResource).start();
 
+                    // envia resource (abre thread de envio com socket stream)
+                    PeerSendFile sendFile = null;
+                    int retry = 0;
+                    while (retry < 3) {
+                        try {
+                            sendFile = new PeerSendFile(nextFilePort++, clientAddress, clientPort, localResource,
+                                    socketListen);
+                            break;
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            retry++;
+                        }
+                    }
+                    if (retry >= 3) {
+                        response = "NOT OK".getBytes();
+                        packet = new DatagramPacket(response, response.length, clientAddress, clientPort);
+                        socketListen.send(packet);
+                    } else {
+                        sendFile.start();
+                    }
                 }
-                
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-            
+
     }
 
     private ClientResource localizaResource(String hash) {
         ClientResource locatedResource = null;
         try {
             this.app.clientResourceSemaphore.acquire();
-            for(ClientResource resource : this.app.clientResources) {
+            for (ClientResource resource : this.app.clientResources) {
                 if (resource.getHash().equals(hash)) {
                     locatedResource = resource;
                     break;
