@@ -43,13 +43,14 @@ public class PeerListener extends Thread {
                 String vars[] = content.split("\\|");
 
                 // get-resouce|AJLKSDH1J23ASDAS
-                if (vars[0].equals("get-resource") && vars.length >= 2) {
+                if ((vars[0].equals("get-resource") || vars[0].equals("gr")) && vars.length >= 2) {
                     // name|hash
                     String resourceHash = vars[1];
 
                     // procura resource
                     ClientResource localResource = locateResource(resourceHash);
                     if (localResource == null) {
+                        System.out.println("Resource not found in peer.");
                         response = "NOT OK".getBytes();
                         packet = new DatagramPacket(response, response.length, clientAddress, clientPort);
                         socketListen.send(packet);
@@ -64,7 +65,7 @@ public class PeerListener extends Thread {
                             sendFileThread = new PeerSendFile(nextFilePort++, clientAddress, clientPort, localResource,
                                     socketListen);
                             break;
-                        } catch (Exception e) {
+                        } catch (IOException e) {
                             System.out.println(e.getMessage());
                             retry++;
                         }

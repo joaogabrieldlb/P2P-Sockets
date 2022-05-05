@@ -34,50 +34,16 @@ public class ClientScanResources extends Thread {
 
     @Override
     public void run() {
-        List<File> filesInFolder = new ArrayList<>();
+        Set<ClientResource> resourcesInFolder = new HashSet<>();
         while (true) {
             // ler arquivos da pasta resources
             try {
-                filesInFolder = Files.walk(Paths.get(RESOURCE_FOLDER))
-                    .filter(Files::isRegularFile)
-                    .map(Path::toFile)
-                    .collect(Collectors.toList());
-            } catch (IOException e) {
-                System.out.println(e.getMessage());
-            }
-            
-            // adiciona no clientresource e registra no server
-            for (File file : filesInFolder) {
-                ClientResource resource;
-                try {
-                    resource = new ClientResource(file);
-                    boolean resouceAdded = false;
-                    try {
-                        this.app.clientResourceSemaphore.acquire();
-                        resouceAdded = this.app.clientResources.add(resource);
-                        this.app.clientResourceSemaphore.release();
-                    } catch (InterruptedException e) {
-                        System.out.println(e.getMessage());
-                    }
-                    if (resouceAdded) {
-                        // envia add-resource para o server e set isRegistered true
+                resourcesInFolder = Files.walk(Paths.get(RESOURCE_FOLDER))
+                .filter(Files::isRegularFile)
+                .map(Path::toFile)
+                .map(file -> {
                         try {
-                            this.app.clientResourceSemaphore.acquire();
-                            addResource(resource);
-                            this.app.clientResourceSemaphore.release();
-                        } catch (InterruptedException e) {
-                            System.out.println(e.getMessage());
-                        }
-                    }
-                } catch (NoSuchAlgorithmException | IOException e) {
-                    System.out.println(e.getMessage());
-                }
-            }
-
-            // verifica os removidos
-            List<String> filesInFolderHashes = filesInFolder.stream().map(t -> {
-                        try {
-                            return ResourceHash.computeMD5(t);
+                            return new ClientResource(file);
                         } catch (NoSuchAlgorithmException e) {
                             System.out.println(e.getMessage());
                         } catch (IOException e) {
@@ -85,34 +51,65 @@ public class ClientScanResources extends Thread {
                         }
                         return null;
                     })
-                .filter(h -> h != null)
-                .toList(); 
-            
-                
+                    .filter(r -> r != null)
+                    .collect(Collectors.toSet());
+                } catch (Exception e) {
+                    System.out.println(e.getMessage());
+                }
+        
             try {
-                Set<ClientResource> resourcesToRemove = new HashSet<>();
+                Set<ClientResource> resourcesToAdd = new HashSet<>();
                 this.app.clientResourceSemaphore.acquire();
-                for (ClientResource resource : this.app.clientResources) {
-                    if (!filesInFolderHashes.contains(resource.getHash())) {
-                        // envia remove-resource para o server
-                        this.app.mainSocketSemaphore.acquire();
-                        if (removeResource(resource)) {
-                            resourcesToRemove.add(resource);
-                        }
-                        this.app.mainSocketSemaphore.release();
-                    } else if (!resource.isRegistred()) {
-                        // envia add-resource para o server
-                        this.app.mainSocketSemaphore.acquire();
-                        addResource(resource);
-                        this.app.mainSocketSemaphore.release();
+                for (ClientResource clientResource : resourcesInFolder) {
+                    if (!this.app.clientResources.contains(clientResource)) {
+                        resourcesToAdd.add(clientResource);
                     }
                 }
-                this.app.clientResources.removeAll(resourcesToRemove);
                 this.app.clientResourceSemaphore.release();
+
+                resourcesToAdd.forEach(resource -> {
+                    try {
+                        this.app.mainSocketSemaphore.acquire();
+                        addResourceInServer(resource);
+                        this.app.mainSocketSemaphore.release();
+                        if (resource.isRegistred()) {
+                            this.app.clientResourceSemaphore.acquire();
+                            this.app.clientResources.add(resource);
+                            this.app.clientResourceSemaphore.release();
+                        }
+                    } catch (InterruptedException e) {
+                        System.out.println(e.getMessage());
+                    }
+                });
+                
+                Set<ClientResource> resourcesToRemove = new HashSet<>();
+                this.app.clientResourceSemaphore.acquire();
+                for (ClientResource clientResource : this.app.clientResources) {
+                    if (!resourcesInFolder.contains(clientResource)){
+                        resourcesToRemove.add(clientResource);
+                    }
+                }
+                this.app.clientResourceSemaphore.release();
+
+                resourcesToRemove.forEach(resource -> {
+                    boolean isRemoved;
+                    try {
+                        this.app.mainSocketSemaphore.acquire();
+                        isRemoved = removeResourceInServer(resource);
+                        this.app.mainSocketSemaphore.release();
+                        if (isRemoved) {
+                            this.app.clientResourceSemaphore.acquire();
+                            this.app.clientResources.remove(resource);
+                            this.app.clientResourceSemaphore.release();
+                        }
+                    } catch (InterruptedException e) {
+                        System.out.println(e.getMessage());
+                    }
+                });
             } catch (InterruptedException e) {
-                System.out.println(e.getMessage());
+                e.printStackTrace();
             }
-            
+
             try {
                 Thread.sleep(10000);
             } catch (InterruptedException e) {
@@ -121,7 +118,7 @@ public class ClientScanResources extends Thread {
         }
     }
         
-    private void addResource(ClientResource newResource) {
+    private boolean addResourceInServer(ClientResource newResource) {
         try {
             String messege = "add-resource|" + newResource.toString();
             this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress,
@@ -146,9 +143,11 @@ public class ClientScanResources extends Thread {
                 System.out.println(e.getMessage());
             }
         }
+        return newResource.isRegistred();
     }
 
-    private boolean removeResource(ClientResource removedResource) {
+    private boolean removeResourceInServer(ClientResource removedResource) {
+        boolean result = false;
         try {
             String messege = "remove-resource|" + removedResource.toString();
             this.packet = new DatagramPacket(messege.getBytes(), messege.length(), this.app.serverAddress,
@@ -161,7 +160,7 @@ public class ClientScanResources extends Thread {
             mainSocket.receive(packet);
 
             String content = new String(packet.getData()).trim();
-            return content.equals("OK");
+            result = content.equals("OK");
         } catch (Exception e) {
             System.out.println(e.getMessage());
         } finally {
@@ -171,7 +170,7 @@ public class ClientScanResources extends Thread {
                 System.out.println(e.getMessage());
             }
         }
-        return false;
+        return result;
     }
 
 }

@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.Arrays;
 
 import javax.lang.model.element.ModuleElement.RequiresDirective;
@@ -64,21 +65,35 @@ public class PeerConsole implements Runnable {
 
         while (true) {
             System.out.println("\nAvailable operations:");
-            System.out.println("- list-resources --name <search-argument> | list-resources --hash <search-argument>");
-            System.out.println("- get-resource <hash> <ip_address> <port>");
+            System.out.println("- list-resources | lr <options> <search-argument>");
+            System.out.println("  <options>\t--name | -n");
+            System.out.println("\t\t--hash | -h");
+            System.out.println("- get-resource | gr <hash> <ip_address> <port>");
 
             try {
+                System.out.print("> ");
                 str = obj.readLine();
                 String vars[] = str.split("\\s");
 
                 switch (vars[0]) {
                     case "list-resources":
-                        if (vars[1].equals("--name") || vars[1].equals("--hash"))
-                            this.listResources(vars);
+                    case "lr":
+                        if (vars.length >= 2) {
+                            if (((vars[1].equals("--name") || vars[1].equals("-n"))
+                                || (vars[1].equals("--hash") || vars[1].equals("-h")))
+                                && vars.length >= 3) {
+                                this.listResources(vars);
+                            }
+                            else System.out.println("Invalid search type.");
+                        }
                         else System.out.println("Invalid search type.");
                         break;
                     case "get-resource":
-                        this.getResource(vars);
+                    case "gr":
+                        if (vars.length == 4) {
+                            this.getResource(vars);
+                        }
+                        else System.out.println("Invalid arguments.");
                         break;
                     default:
                         System.out.println("Invalid operation.");
@@ -117,6 +132,12 @@ public class PeerConsole implements Runnable {
             this.app.mainSocketSemaphore.release();
             mainSocket.setSoTimeout(0);
             return;
+        } finally {
+            try {
+                mainSocket.setSoTimeout(0);
+            } catch (SocketException e) {
+                System.out.println(e.getMessage());
+            }
         }
         this.app.mainSocketSemaphore.release();
         String content = new String(responsePacket.getData(), 0, responsePacket.getLength()).trim();
@@ -152,12 +173,18 @@ public class PeerConsole implements Runnable {
             this.app.mainSocketSemaphore.release();
             mainSocket.setSoTimeout(0);
             return;
+        } finally {
+            try {
+                mainSocket.setSoTimeout(0);
+            } catch (SocketException e) {
+                System.out.println(e.getMessage());
+            }
         }
         this.app.mainSocketSemaphore.release();
         int resourcesCount = Integer.parseInt(new String(responsePacket.getData(), 0, responsePacket.getLength()));
 
         if (resourcesCount > 0) {
-            System.out.println("\n File Name | HASH | Peer IP | Port");
+            System.out.println("\nFile Name | HASH | Peer IP | Port");
             System.out.println();
             for (int i = 0; i < resourcesCount; i++) {
                 // Aguarda resposta do server para X resources encontrados.

@@ -1,6 +1,7 @@
 package Server;
 
 import java.net.InetAddress;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
 
@@ -23,14 +24,16 @@ public class ServerP2PHearthbeat extends Thread {
                 // String item = i.next();
                 // System.out.println(item);
                 // }
+                Set<Peer> peersToRemove = new HashSet<>();
                 connectedPeersSemaphore.acquire();
                 for (Peer peer : this.connectedPeers) {
                     int timeout = peer.decrementTimeOut();
                     if (timeout == 0) {
-                        this.connectedPeers.remove(peer);
+                        peersToRemove.add(peer);
                         System.out.println("Peer removido por inatividade: " + peer.toString());
                     }
                 }
+                this.connectedPeers.removeAll(peersToRemove);
                 connectedPeersSemaphore.release();
             } catch (InterruptedException e) {
                 System.out.println(e.getMessage());
