@@ -39,6 +39,7 @@ public class PeerListener extends Thread {
                 clientPort = packet.getPort();
 
                 content = new String(packet.getData()).trim();
+                System.out.println("\n[ " + clientAddress.getHostName() + ":" + clientPort + " ] Request received: " + content);
                 String vars[] = content.split("\\|");
 
                 // get-resouce|AJLKSDH1J23ASDAS
@@ -47,32 +48,34 @@ public class PeerListener extends Thread {
                     String resourceHash = vars[1];
 
                     // procura resource
-                    ClientResource localResource = localizaResource(resourceHash);
+                    ClientResource localResource = locateResource(resourceHash);
                     if (localResource == null) {
                         response = "NOT OK".getBytes();
                         packet = new DatagramPacket(response, response.length, clientAddress, clientPort);
                         socketListen.send(packet);
+                        continue;
                     }
 
                     // envia resource (abre thread de envio com socket stream)
-                    PeerSendFile sendFile = null;
+                    PeerSendFile sendFileThread = null;
                     int retry = 0;
                     while (retry < 3) {
                         try {
-                            sendFile = new PeerSendFile(nextFilePort++, clientAddress, clientPort, localResource,
+                            sendFileThread = new PeerSendFile(nextFilePort++, clientAddress, clientPort, localResource,
                                     socketListen);
                             break;
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            System.out.println(e.getMessage());
                             retry++;
                         }
                     }
+
                     if (retry >= 3) {
                         response = "NOT OK".getBytes();
                         packet = new DatagramPacket(response, response.length, clientAddress, clientPort);
                         socketListen.send(packet);
                     } else {
-                        sendFile.start();
+                        sendFileThread.start();
                     }
                 }
             } catch (IOException e) {
@@ -82,7 +85,7 @@ public class PeerListener extends Thread {
 
     }
 
-    private ClientResource localizaResource(String hash) {
+    private ClientResource locateResource(String hash) {
         ClientResource locatedResource = null;
         try {
             this.app.clientResourceSemaphore.acquire();

@@ -71,6 +71,8 @@ public class PeerSendFile extends Thread {
             OutputStream os = clientSocket.getOutputStream();
             os.write(buffer, 0, buffer.length);
             os.flush();
+            os.close();
+            bis.close();
             clientSocket.close();
         } catch (IOException ex) {
             System.out.println("Connection error.");

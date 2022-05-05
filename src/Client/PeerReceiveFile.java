@@ -9,6 +9,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 
@@ -21,6 +22,7 @@ public class PeerReceiveFile extends Thread {
     private String remoteFileHash;
     private String remoteFileName;
     private final String TEMP_FOLDER = "./temp/"; // Pasta em bin/resources -> rever isso
+    private final String RESOURCE_FOLDER = "./resources/";
 
     public PeerReceiveFile(InetAddress remotePeerIpAddress, String port, String fileHash, String remotePeerFileName)
             throws IOException {
@@ -38,7 +40,8 @@ public class PeerReceiveFile extends Thread {
             Socket clientSocket = new Socket(this.remotePeerIp.getHostAddress(), this.remotePeerPort);
             byte[] buffer = new byte[1024];
             InputStream is = clientSocket.getInputStream();
-            FileOutputStream fos = new FileOutputStream(this.remoteFileName);
+            File receivedFile = new File(TEMP_FOLDER + this.remoteFileName);
+            FileOutputStream fos = new FileOutputStream(receivedFile);
             BufferedOutputStream bos = new BufferedOutputStream(fos);
             int bytesRead;
             while ((bytesRead = is.read(buffer, 0, buffer.length)) != -1) {
@@ -48,13 +51,13 @@ public class PeerReceiveFile extends Thread {
                 bos.write(buffer, 0, bytesRead);
             }
             bos.close();
+            is.close();
             clientSocket.close();
 
-            File receivedFile = new File(this.remoteFileName);
             String receivedFileHash = ResourceHash.computeMD5(receivedFile);
             if (remoteFileHash.equals(receivedFileHash)) {
                 System.out.println("File transfer successful.");
-                receivedFile.renameTo(new File("./resources/", receivedFile.getName()));
+                Files.move(receivedFile.toPath(), Paths.get(RESOURCE_FOLDER, this.remoteFileName), StandardCopyOption.REPLACE_EXISTING);
             } else {
                 System.out.println("File transfer failed. Hash mismatch.");
             }

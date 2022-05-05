@@ -27,12 +27,17 @@ public class ServerP2PHearthbeat extends Thread {
                 for (Peer peer : this.connectedPeers) {
                     int timeout = peer.decrementTimeOut();
                     if (timeout == 0) {
-                        System.out.println("Peer removido por inatividade: " + peer.toString());
                         this.connectedPeers.remove(peer);
+                        System.out.println("Peer removido por inatividade: " + peer.toString());
                     }
                 }
                 connectedPeersSemaphore.release();
-                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                System.out.println(e.getMessage());
+            }
+
+            try {
+                Thread.sleep(10000); // 10seg
             } catch (InterruptedException e) {
             }
         }
@@ -52,8 +57,7 @@ public class ServerP2PHearthbeat extends Thread {
             }
             connectedPeersSemaphore.release();
         } catch (InterruptedException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            System.out.println(e.getMessage());
         }
         return reset;
     }

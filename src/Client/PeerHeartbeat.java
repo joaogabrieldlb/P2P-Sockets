@@ -1,8 +1,10 @@
 package Client;
 
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.Semaphore;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
+import java.net.SocketException;
 
 public class PeerHeartbeat extends Thread {
     private DatagramSocket socket;
@@ -11,13 +13,11 @@ public class PeerHeartbeat extends Thread {
     private final byte[] MESSAGE = "heartbeat".getBytes();
     private int port;
     private int serverPort;
-    protected Semaphore mainSocketSemaphore;
 
-    public PeerHeartbeat(int port, InetAddress serverAddress, int serverPort, Semaphore mainsockSemaphore)
+    public PeerHeartbeat(int port, InetAddress serverAddress, int serverPort)
             throws SocketException {
 
         // cria um socket datagrama
-        this.mainSocketSemaphore = mainsockSemaphore;
         this.port = port;
         this.serverPort = serverPort;
         this.serverAddress = serverAddress; // serverAddress
@@ -30,11 +30,10 @@ public class PeerHeartbeat extends Thread {
         while (true) {
             try {
                 this.packet = new DatagramPacket(this.MESSAGE, MESSAGE.length, this.serverAddress, this.serverPort);
-                this.mainSocketSemaphore.acquire();
                 socket.send(packet);
-                this.mainSocketSemaphore.release();
-            } catch (IOException | InterruptedException e) {
-                socket.close();
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+                // socket.close();
                 // abrir novo se o atual fechar...
             }
 

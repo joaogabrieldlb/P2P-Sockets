@@ -88,59 +88,59 @@ public class ServerP2PApp {
                     }
                 }
             } catch (IOException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             } catch (InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
     }
 
-    private void listResources(String searchQuery, String searchTerm) throws IOException, InterruptedException {
+    private void listResources(String searchType, String searchContent) throws IOException, InterruptedException {
         List<String> resourceSearch = new ArrayList<>();
 
-        if (searchQuery.equals("--name")) {
+        if (searchType.equals("--name")) {
+            this.connectedPeersSemaphore.acquire();
             for (Peer peer : this.connectedPeers) {
                 if (peer.getResources().size() > 0
-                        && (peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()
-                                && peer.getPort() != this.peerPort)) {
+                    && (peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()
+                        && peer.getPort() != this.peerPort)) {
                     for (Resource resource : peer.getResources()) {
-                        if (resource.getName().contains(searchTerm)) {
+                        if (resource.getName().contains(searchContent)) {
                             // nome|hash|ip|port
                             resourceSearch.add(resource.getName() + "|" + resource.getHash() + "|"
-                                    + resource.getPeer().getIpAddress().getHostAddress() + "|"
-                                    + resource.getPeer().getPort());
+                            + resource.getPeer().getIpAddress().getHostAddress() + "|"
+                            + resource.getPeer().getPort());
                         }
                     }
                 }
             }
+            this.connectedPeersSemaphore.release();
         }
 
-        if (searchQuery.equals("--hash")) {
+        if (searchType.equals("--hash")) {
+            this.connectedPeersSemaphore.acquire();
             for (Peer peer : this.connectedPeers) {
                 if (peer.getResources().size() > 0
-                        && (peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()
-                                && peer.getPort() != this.peerPort)) {
+                && (peer.getIpAddress().getHostAddress() != this.peerAddr.getHostAddress()
+                && peer.getPort() != this.peerPort)) {
                     for (Resource resource : peer.getResources()) {
-                        if (resource.getHash().equalsIgnoreCase(searchTerm)) {
+                        if (resource.getHash().equalsIgnoreCase(searchContent)) {
                             // nome|hash|ip|port
                             resourceSearch.add(resource.getName() + "|" + resource.getHash() + "|"
-                                    + resource.getPeer().getIpAddress().getHostAddress() + "|"
-                                    + resource.getPeer().getPort());
+                            + resource.getPeer().getIpAddress().getHostAddress() + "|"
+                            + resource.getPeer().getPort());
                         }
                     }
                 }
             }
+            this.connectedPeersSemaphore.release();
         }
 
         // enviar size resourcesCount
         response = Integer.valueOf(resourceSearch.size()).toString().getBytes();
         packet = new DatagramPacket(response, response.length, peerAddr, peerPort);
 
-        this.connectedPeersSemaphore.acquire();
         socket.send(packet);
-        this.connectedPeersSemaphore.release();
 
         // Enviando todos os resources.
         if (resourceSearch.size() > 0) {
@@ -169,14 +169,14 @@ public class ServerP2PApp {
 
     private void addResource(String resourceName, String resourceHash)
             throws InterruptedException, IOException {
+        this.connectedPeersSemaphore.acquire();
         for (Peer peer : this.connectedPeers) {
             if (peer.getIpAddress().getHostAddress().equals(this.peerAddr.getHostAddress())
                     && peer.getPort() == this.peerPort) {
-                this.connectedPeersSemaphore.acquire();
                 peer.addResource(new Resource(resourceName, resourceHash, peer));
-                this.connectedPeersSemaphore.release();
             }
         }
+        this.connectedPeersSemaphore.release();
 
         response = "OK".getBytes();
 
@@ -185,13 +185,13 @@ public class ServerP2PApp {
     }
 
     private void removeResource(String resourceName, String resourceHash) throws InterruptedException, IOException {
+        this.connectedPeersSemaphore.acquire();
         for (Peer peer : this.connectedPeers) {
             if (peer.getIpAddress().getHostAddress().equals(peerAddr.getHostAddress())) {
-                this.connectedPeersSemaphore.acquire();
                 peer.removeResource(new Resource(resourceName, resourceHash, peer));
-                this.connectedPeersSemaphore.release();
             }
         }
+        this.connectedPeersSemaphore.release();
 
         response = "OK".getBytes();
 
