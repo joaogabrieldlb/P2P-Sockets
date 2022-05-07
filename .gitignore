@@ -1,6 +1,7 @@
-bin/
 .vscode/
+bin/
 lib/
+temp/
 
 ### Java ###
 # Compiled class file

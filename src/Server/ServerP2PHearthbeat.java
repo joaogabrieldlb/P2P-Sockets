@@ -20,10 +20,6 @@ public class ServerP2PHearthbeat extends Thread {
         while (true) {
             // decrementa timeouts
             try {
-                // for(Iterator<Peer> i = this.connectedPeers.iterator(); i.hasNext(); ) {
-                // String item = i.next();
-                // System.out.println(item);
-                // }
                 Set<Peer> peersToRemove = new HashSet<>();
                 connectedPeersSemaphore.acquire();
                 for (Peer peer : this.connectedPeers) {
@@ -40,7 +36,7 @@ public class ServerP2PHearthbeat extends Thread {
             }
 
             try {
-                Thread.sleep(10000); // 10seg
+                Thread.sleep(1000); // 10seg
             } catch (InterruptedException e) {
             }
         }

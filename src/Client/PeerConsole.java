@@ -9,8 +9,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.Arrays;
 
-import javax.lang.model.element.ModuleElement.RequiresDirective;
-
 public class PeerConsole implements Runnable {
 
     private ClientP2PApp app;
@@ -62,14 +60,9 @@ public class PeerConsole implements Runnable {
     private void startConsoleInterface() {
         BufferedReader obj = new BufferedReader(new InputStreamReader(System.in));
         String str = "";
+        this.printHelp();
 
         while (true) {
-            System.out.println("\nAvailable operations:");
-            System.out.println("- list-resources | lr <options> <search-argument>");
-            System.out.println("  <options>\t--name | -n");
-            System.out.println("\t\t--hash | -h");
-            System.out.println("- get-resource | gr <hash> <ip_address> <port>");
-
             try {
                 System.out.print("> ");
                 str = obj.readLine();
@@ -95,14 +88,29 @@ public class PeerConsole implements Runnable {
                         }
                         else System.out.println("Invalid arguments.");
                         break;
+                    case "exit":
+                    case "quit":
+                    case "q":
+                        return;
                     default:
                         System.out.println("Invalid operation.");
+                        this.printHelp();
                         break;
                 }
             } catch (IOException | InterruptedException e) {
                 System.out.println(e.getMessage());
             }
         }
+    }
+
+    private void printHelp() {
+        System.out.println("\nAvailable operations:");
+        System.out.println("- list-resources | lr <options> <search-argument>");
+        System.out.println("  <options>\t--name | -n");
+        System.out.println("\t\t--hash | -h");
+        System.out.println("- get-resource | gr <hash> <ip_address> <port>");
+        System.out.println("- exit | quit | q\tTerminate client application.");
+        System.out.println("- help | h\t\tPrint this help.");
     }
 
     private void getResource(String[] vars) throws IOException, InterruptedException {
